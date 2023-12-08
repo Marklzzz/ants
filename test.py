@@ -37,7 +37,7 @@ class TextInputBox(pygame.sprite.Sprite):
                 if event.key == pygame.K_BACKSPACE and self.active:
                     self.text = self.text[:-1]
                 else:
-                    if self.active and event.unicode in 'qazwsxedcrfvtgbyhnujmikolp.@_QAZWSXEDCRFVTGBYHNUJMIKOLP':
+                    if self.active and event.unicode in '1234567890':
                         self.text += event.unicode
 
                 self.render_text()
