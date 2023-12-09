@@ -11,7 +11,7 @@ with open('file.txt', 'w') as f:
         d = dict()
         d['ants'] = [{
             'pos': ant.pos.astype(int).tolist(),
-            'current_target': ant.current_target
+            'current_target': ant.current_target #saves current target for later vizualization
         } for ant in env.ants]
         d['targets'] = [{'pos': target.pos.astype(int).tolist(),
                          'type': target.target_type,
