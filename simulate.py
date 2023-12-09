@@ -15,7 +15,8 @@ with open('file.txt', 'w') as f:
         } for ant in env.ants]
         d['targets'] = [{'pos': target.pos.astype(int).tolist(),
                          'type': target.target_type,
-                         'size': target.size} for target in env.targets]
+                         'size': target.size,
+                         'health': target.health} for target in env.targets]
         f.write(json.dumps(d) + '\n')
 
 
