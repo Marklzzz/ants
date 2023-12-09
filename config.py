@@ -1,9 +1,18 @@
 import math
 
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+MAGENTA = (255, 0, 255)
+
 SHOUT_DISTANCE = 150
 N_ANTS = 5000
 MIN_DISTANCE_FROM_BORDER = 10
 N_TARGET_TYPES = 4 + 1  # 1 food target and 1 queen target
+target_colors = [GREEN, BLUE, RED, YELLOW, MAGENTA]
 N_TARGETS = (N_TARGET_TYPES - 1) * 10
 TARGET_START_SIZE = 15
 TARGET_ACCELERATION = 50
@@ -17,13 +26,7 @@ MARGIN_TO_QUEEN = 0.3
 DELETE_TARGET_MARGIN = 4 # determines when targets deletes itself (so if 4 and start target size = 40 in deletes at size 10)
 ACTUAL_HEALTH = TARGET_HEALTH * (1 - 1/DELETE_TARGET_MARGIN)
 
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-MAGENTA = (255, 0, 255)
+
 
 FPS = 60
 HEIGHT = 900
