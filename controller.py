@@ -11,9 +11,13 @@ config.update()
 
 @njit
 def norm(x):
+    '''
+    :param x:
+    :return: fast distance
+    '''
     return (x[0] ** 2 + x[1] ** 2) ** 0.5
 
-
+# spec map for target class
 target_spec = [('x', nb.float64),
                ('y', nb.float64),
                ('target_type', nb.int32),
@@ -41,6 +45,7 @@ class Target:
 
     def step(self, t: float):
         """
+        step method for target class
         :param t: time step
         :return:
         """
@@ -78,13 +83,16 @@ class Target:
 # class Queen(Target):
 #     pass
 
-
+# shout spec for shout class
 shout_spec = [('distances', nb.float64[:]),
               ('pos', nb.float32[:])]
 
 
 @jitclass(shout_spec)
 class Shout:
+    '''
+    shout class, contains distances to ant shout, position of shout
+    '''
     def __init__(self, distances, pos):
         """
         :param distances: distances that ant shout
@@ -93,7 +101,7 @@ class Shout:
         self.pos = pos
         self.distances = distances
 
-
+# ant spec for ant class
 ant_spec = [('x', nb.float32),
             ('y', nb.float32),
             ('target_types', nb.int32[:]),
@@ -110,6 +118,9 @@ ant_spec = [('x', nb.float32),
 
 @jitclass(ant_spec)
 class Ant:
+    '''
+    ant class, contains ant logic
+    '''
     def __init__(self, x: float, y: float, target_types):
         """
         :param x: start x
@@ -131,6 +142,7 @@ class Ant:
     def step(self, t: float, targets):
         """
         Update ant position and shout if ant find target
+        step method for ant class
         :param t: time step
         :param targets: existing targets
         """
@@ -160,6 +172,10 @@ class Ant:
 
         self.dist_to_queen = max(config.WIDTH, config.HEIGHT)
 
+
+        '''
+        target interaction logic
+        '''
         for i in prange(len(targets)):
             target = targets[i]
             dist = norm(self.pos - target.pos)

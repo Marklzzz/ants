@@ -31,10 +31,17 @@ def start():
                                config.target_colors[target.target_type],
                                (int(target.pos[0]), int(target.pos[1])),
                                target.size)
+            if target.target_type == 0:
+                pygame.draw.circle(screen,config.queen_health_color,(int(target.pos[0]),int(target.pos[1])),int(target.size*target.health/config.QUEEN_START_HEALTH))
         for ant in env.ants:
-            screen.set_at((int(ant.pos[0]), int(ant.pos[1])), config.target_colors[ant.current_target])
+            if ant.current_target == 0:
+                pygame.draw.circle(screen,config.GRAY,(int(ant.pos[0]),int(ant.pos[1])),1)
+            else:
+                pygame.draw.circle(screen, config.target_colors[ant.current_target], (int(ant.pos[0]),int(ant.pos[1])),config.ANT_SIZE)
 
         pygame.display.flip()
 
     pygame.quit()
+
+start()
 
