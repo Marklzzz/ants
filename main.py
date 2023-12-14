@@ -2,7 +2,7 @@ import pygame
 from controller import Env
 from config import *
 
-target_colors = [GREEN, BLUE, RED, YELLOW]
+target_colors = [GREEN, BLUE, RED, YELLOW, MAGENTA]
 
 pygame.init()
 pygame.mixer.init()
@@ -30,7 +30,7 @@ while running:
                            (int(target.pos[0]), int(target.pos[1])),
                            target.size)
     for ant in env.ants:
-        pygame.draw.circle(screen, WHITE, (int(ant.pos[0]), int(ant.pos[1])), ANT_SIZE)
+        screen.set_at((int(ant.pos[0]), int(ant.pos[1])), WHITE)
 
     pygame.display.flip()
 
