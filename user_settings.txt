@@ -1,7 +1,7 @@
-ants_n (from 100 to 16000): 5000
+ants_n (from 100 to 16000): 3000
 n_targets (from 1 to 25): 10
-n_target_types (from 1 to 5): 5
+n_target_types (from 2 to 5): 2
 target_health (from 100 to 1500): 1000
-margin_to_queen (from 1 to 9): 7
-queen_start_health (from 100 to 300): 300
-simulate, main or visualise (1, 2 or 3): 1
+margin_to_queen (from 1 to 9): 6
+queen_start_health (from 100 to 500): 300
+simulate, main or visualise (1, 2 or 3): 2

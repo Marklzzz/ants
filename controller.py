@@ -183,7 +183,7 @@ class Ant:
                 self.dist_to_queen = dist
             if dist <= target.size and target.target_type == self.current_target:
                 if target.target_type != 0: target.size -= config.TARGET_START_SIZE / config.TARGET_HEALTH
-                if target.size <= config.TARGET_START_SIZE // 4:
+                if target.size <= config.TARGET_START_SIZE // config.DELETE_TARGET_MARGIN:
                     targets.append(Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
                                           randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
                                           target.target_type))

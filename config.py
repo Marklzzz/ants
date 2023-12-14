@@ -11,18 +11,18 @@ MAGENTA = (255, 0, 255)
 ORANGE = (255, 165, 0)
 
 SHOUT_DISTANCE = 100
-ANT_SIZE = 2
+ANT_SIZE = 1
 N_ANTS = 700
 MIN_DISTANCE_FROM_BORDER = 10
-N_TARGET_TYPES = 4  # 1 food target and 1 queen target
+N_TARGET_TYPES = 4 + 1 # 1 food target and 1 queen target
 target_colors = [YELLOW, BLUE, RED, GREEN, MAGENTA]
 queen_health_color = ORANGE
 N_TARGETS = (N_TARGET_TYPES - 1) * 3
 TARGET_START_SIZE = 25
 TARGET_ACCELERATION = 50
-ANT_SPEED = 250
-ANT_SPEED_NOISE = 0.1
-ANT_DIRECTION_NOISE = math.pi / 90
+ANT_SPEED = 200
+ANT_SPEED_NOISE = 0.3
+ANT_DIRECTION_NOISE = math.pi / 360
 TARGET_HEALTH = 1000
 CHANCE_TO_SHOUT = 0.003
 CHANCE_TO_QUEEN = 0.0001
@@ -30,7 +30,7 @@ MARGIN_TO_QUEEN = 0.3
 QUEEN_START_HEALTH = 300
 QUEEN_LOSE_HEALTH_CHANCE = 1
 
-DELETE_TARGET_MARGIN = 4  # determines when targets deletes itself (so if 4 and start target size = 40 in deletes at size 10)
+DELETE_TARGET_MARGIN = 2  # determines when targets deletes itself (so if 4 and start target size = 40 in deletes at size 10)
 ACTUAL_HEALTH = TARGET_HEALTH * (1 - 1 / DELETE_TARGET_MARGIN)
 
 FPS = 60
