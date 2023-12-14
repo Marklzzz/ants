@@ -42,6 +42,3 @@ def start():
         pygame.display.flip()
 
     pygame.quit()
-
-start()
-
