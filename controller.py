@@ -1,61 +1,26 @@
 import numpy as np
+from numba.experimental import jitclass
+from numba import njit, deferred_type, prange
+import numba as nb
 from random import randint, random
-from typing import List
 
 from config import *
 
 
-def generate_new_target(target_types: List[int]):
-    """
-    Generate new target by next(generate_new_target).
-    :param target_types: target's types
-    :return: new target type
-    """
-    i = randint(0, len(target_types) - 1)
-    k = True
-    while True:
-        yield target_types[i] if k else 0
-        if k:
-            i = (i + 1) % len(target_types)
-        k = not k
+@njit
+def norm(x):
+    return (x[0] ** 2 + x[1] ** 2) ** 0.5
 
 
-class Env:
-    def __init__(self, t: float):
-        """
-        :param t: time step
-        """
-        self.t = t
-        self.target_types = [_ for _ in range(1, N_TARGET_TYPES)]
-
-        # create ants
-        self.ants = [Ant(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
-                         randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
-                         self.target_types) for i in range(N_ANTS)]
-
-        # create targets
-        self.targets = []
-        self.targets.append(Queen(WIDTH // 2, HEIGHT // 2, 0))  # append queen
-        for target_type in self.target_types:
-            for i in range(N_TARGETS // len(self.target_types)):
-                self.targets.append(Target(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
-                                           randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
-                                           target_type))
-
-    def step(self):
-        shouts = []
-        # update targets
-        for target in self.targets:
-            target.step(self.t)
-        # update ants
-        for ant in self.ants:
-            ant.step(self.t, self.targets, shouts)
-        # change ants directions
-        for ant in self.ants:
-            for shout in shouts:
-                ant.update_direction(shout)
+target_spec = [('x', nb.float64),
+               ('y', nb.float64),
+               ('target_type', nb.int32),
+               ('speed', nb.float32[:]),
+               ('pos', nb.float32[:]),
+               ('size', nb.float32)]
 
 
+@jitclass(target_spec)
 class Target:
     def __init__(self, x: float, y: float, target_type: int):
         """
@@ -91,12 +56,17 @@ class Target:
             self.speed[1] *= -1
 
 
-class Queen(Target):
-    pass
+# class Queen(Target):
+#     pass
 
 
+shout_spec = [('distances', nb.float64[:]),
+              ('pos', nb.float32[:])]
+
+
+@jitclass(shout_spec)
 class Shout:
-    def __init__(self, distances: List[int], pos):
+    def __init__(self, distances, pos):
         """
         :param distances: distances that ant shout
         :param pos: ant position
@@ -105,33 +75,49 @@ class Shout:
         self.distances = distances
 
 
+ant_spec = [('x', nb.float32),
+            ('y', nb.float32),
+            ('target_types', nb.int32[:]),
+            ('pos', nb.float32[:]),
+            ('speed', nb.float32),
+            ('direction', nb.float32[:]),
+            ('current_target', nb.int32),
+            ('target_distances', nb.float64[:]),
+            ('return_to_queen', nb.boolean),
+            ('k', nb.int32)]
+
+
+@jitclass(ant_spec)
 class Ant:
-    def __init__(self, x: float, y: float, target_types: List[int]):
+    def __init__(self, x: float, y: float, target_types):
         """
         :param x: start x
         :param y: start y
         :param target_types: targets' types without 0 - queen target.
         """
         self.pos = np.array([x, y], dtype=np.float32)
-        self.speed = ANT_SPEED * (1 + random() * ANT_SPEED_NOISE)
+        self.speed = ANT_SPEED * (1 + (random() - 1) * ANT_SPEED_NOISE)
         angle = 2 * np.pi * random()
-        self.direction = np.array([np.cos(angle), np.sin(angle)])
-        self.target_generator = generate_new_target(target_types)
-        self.current_target = next(self.target_generator)
-        self.target_distances = [np.inf for _ in [0] + target_types]
+        self.direction = np.array([np.cos(angle), np.sin(angle)], np.float32)
+        self.current_target = randint(1, len(target_types))
+        self.return_to_queen = False
+        self.k = self.current_target
 
-    def step(self, t: float, targets: List[Target], shouts):
+        self.target_distances = np.full(len(target_types) + 1, np.inf, dtype=np.float64)
+
+    def step(self, t: float, targets):
         """
         Update ant position and shout if ant find target
         :param t: time step
         :param targets: existing targets
-        :param shouts: existing shouts
         """
         random_angle = 2 * (random() - 1) * ANT_DIRECTION_NOISE
-        random_rotate = np.array([[np.cos(random_angle), -np.sin(random_angle)],
-                                  [np.sin(random_angle), np.cos(random_angle)]])
-        self.pos += self.speed * (self.direction.T @ random_rotate).T * t
-        self.target_distances = [dist + 1 for dist in self.target_distances]
+        self.pos += self.speed * np.array([np.cos(random_angle) * self.direction[0] -
+                                           np.sin(random_angle) * self.direction[1],
+                                           np.sin(random_angle) * self.direction[0] +
+                                           np.cos(random_angle) * self.direction[1]
+                                           ]) * t
+        self.target_distances += 1
 
         # self.pos[0] %= WIDTH
         # self.pos[1] %= HEIGHT
@@ -150,24 +136,101 @@ class Ant:
             self.direction[1] *= -1
 
         for target in targets:
-            if np.linalg.norm(self.pos - target.pos) <= target.size and target.target_type == self.current_target:
+            if norm(self.pos - target.pos) <= target.size and target.target_type == self.current_target:
                 target.size *= K_REDUCING_TARGET
                 self.target_distances[self.current_target] = 0
-                self.current_target = next(self.target_generator)
+                self.update_target()
                 self.direction *= -1
-                shouts.append(Shout([dist + SHOUT_DISTANCE for dist in self.target_distances], self.pos))
+                return Shout(self.target_distances + SHOUT_DISTANCE, self.pos)
+        if random() < CHANCE_TO_SHOUT:
+            return Shout(self.target_distances + SHOUT_DISTANCE, self.pos)
         else:
-            if random() < CHANCE_TO_SHOUT:
-                shouts.append(Shout([dist + SHOUT_DISTANCE for dist in self.target_distances], self.pos))
+            return None
 
     def update_direction(self, shout: Shout):
         """
         Update ant direction
         :param shout: shout
         """
-        if (shout.pos != self.pos).any() and np.linalg.norm(shout.pos - self.pos) <= SHOUT_DISTANCE:
+        if (shout.pos != self.pos).any() and norm(shout.pos - self.pos) <= SHOUT_DISTANCE:
             for i, dist in enumerate(shout.distances):
                 if self.target_distances[i] > dist:
                     self.target_distances[i] = dist
                     if self.current_target == i:
-                        self.direction = (shout.pos - self.pos) / np.linalg.norm(shout.pos - self.pos)
+                        self.direction = ((shout.pos - self.pos) / norm(shout.pos - self.pos)).astype(np.float32)
+
+    def update_target(self):
+        if not self.return_to_queen:
+            self.current_target = 0
+        else:
+            self.k = (self.k + 1) % N_TARGET_TYPES
+            if self.k == 0:
+                self.k = 1
+            self.current_target = self.k
+        self.return_to_queen = not self.return_to_queen
+
+
+shout_type = deferred_type()
+shout_type.define(Shout.class_type.instance_type)
+
+ant_type = deferred_type()
+ant_type.define(Ant.class_type.instance_type)
+
+target_type = deferred_type()
+target_type.define(Target.class_type.instance_type)
+
+
+@njit(cache=True, parallel=True)
+def step(ants, shouts):
+    # change ants directions
+    for i in prange(len(ants)):
+        for j in prange(len(shouts)):
+            ants[i].update_direction(shouts[j])
+
+
+class Env:
+    def __init__(self, t: float):
+        """
+        :param t: time step
+        """
+        self.t = t
+        self.target_types = np.array([_ for _ in range(1, N_TARGET_TYPES)], dtype=np.int32)
+
+        # create ants
+        self.ants = nb.typed.List([Ant(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
+                                       randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
+                                       self.target_types) for _ in range(N_ANTS)])
+
+        # create targets
+        self.targets = nb.typed.List([Target(WIDTH // 2, HEIGHT // 2, 0)])  # append queen
+        for target_type_ in self.target_types:
+            for i in range(N_TARGETS // len(self.target_types)):
+                self.targets.append(Target(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
+                                           randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
+                                           target_type_))
+
+    def step(self):
+        shouts = nb.typed.List()
+        # update targets
+        for target in self.targets:
+            target.step(self.t)
+        # update ants
+        for ant in self.ants:
+            shout = ant.step(self.t, self.targets)
+            if shout is not None:
+                shouts.append(shout)
+        if len(shouts) != 0:
+            step(self.ants, shouts)
+        # shouts = nb.typed.List()
+        # # update targets
+        # for target in self.targets:
+        #     target.step(self.t)
+        # # update ants
+        # for ant in self.ants:
+        #     shout = ant.step(self.t, self.targets)
+        #     if shout is not None:
+        #         shouts.append(shout)
+        # # change ants directions
+        # for ant in self.ants:
+        #     for shout in shouts:
+        #         ant.update_direction(shout)
