@@ -117,5 +117,7 @@ if user_answer['simulate, main or visualise (1, 2 or 3)'] == '2':
     game.start()
 elif user_answer['simulate, main or visualise (1, 2 or 3)'] == '1':
     simulate.start()
+    pygame.quit()
 elif user_answer['simulate, main or visualise (1, 2 or 3)'] == '3':
     visualize.start()
+

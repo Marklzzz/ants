@@ -37,7 +37,10 @@ def start():
                                        int(target['size']*target['health']/QUEEN_START_HEALTH))
 
             for ant in d['ants']:
-                screen.set_at((ant['pos'][0], ant['pos'][1]), target_colors[ant['current_target']])
+                if ant['current_target'] == 0:
+                    screen.set_at((int(ant['pos'][0]),int(ant['pos'][1])),GRAY)
+                else:
+                    pygame.draw.circle(screen,target_colors[ant['current_target']],(int(ant['pos'][0]),int(ant['pos'][1])),ANT_SIZE)
 
             pygame.display.flip()
 

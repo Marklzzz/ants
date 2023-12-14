@@ -34,8 +34,8 @@ DELETE_TARGET_MARGIN = 4  # determines when targets deletes itself (so if 4 and 
 ACTUAL_HEALTH = TARGET_HEALTH * (1 - 1 / DELETE_TARGET_MARGIN)
 
 FPS = 60
-HEIGHT = 900
-WIDTH = 1600
+HEIGHT = 800
+WIDTH = 800
 
 
 def update():

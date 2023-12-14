@@ -214,7 +214,7 @@ class Ant:
                         self.direction = ((shout.pos - self.pos) / norm(shout.pos - self.pos)).astype(np.float32)
 
     def update_target(self, target_resources):
-        if not self.return_to_queen:
+        if not self.return_to_queen and self.current_target != 0:
             self.previous_target = self.current_target
             self.current_target = 0
         else:
