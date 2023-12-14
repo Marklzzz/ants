@@ -1,5 +1,7 @@
 import pygame
-
+'''
+UI TEXT INPUT BOX
+'''
 class TextInputBox(pygame.sprite.Sprite):
     def __init__(self, x, y, w, font, inac):
         super().__init__()
