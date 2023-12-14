@@ -25,9 +25,12 @@ while running:
     # Render
     screen.fill(BLACK)
     for i, target in enumerate(env.targets):
-        pygame.draw.circle(screen, target_colors[target.target_type], (target.pos[0], target.pos[1]), target.size)
+        pygame.draw.circle(screen,
+                           target_colors[target.target_type],
+                           (int(target.pos[0]), int(target.pos[1])),
+                           target.size)
     for ant in env.ants:
-        pygame.draw.circle(screen, WHITE, (ant.pos[0], ant.pos[1]), ANT_SIZE)
+        pygame.draw.circle(screen, WHITE, (int(ant.pos[0]), int(ant.pos[1])), ANT_SIZE)
 
     pygame.display.flip()
 

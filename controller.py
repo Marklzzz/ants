@@ -34,12 +34,12 @@ class Env:
 
         # create targets
         self.targets = []
+        self.targets.append(Queen(WIDTH // 2, HEIGHT // 2, 0))  # append queen
         for target_type in self.target_types:
             for i in range(N_TARGETS // len(self.target_types)):
                 self.targets.append(Target(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
                                            randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
                                            target_type))
-        self.targets.append(Queen(WIDTH // 2, HEIGHT // 2, 0))  # append queen
 
     def step(self):
         shouts = []
@@ -95,18 +95,18 @@ class Queen(Target):
 
 
 class Ant:
-    def __init__(self, x, y, targets_types):
+    def __init__(self, x, y, target_types):
         """
         :param x: start x
         :param y: start y
-        :param targets_types: targets' types without 0 - queen target.
+        :param target_types: targets' types without 0 - queen target.
         """
         self.pos = np.array([x, y], dtype=np.float32)
         angle = 2 * np.pi * random()
         self.direction = np.array([np.cos(angle), np.sin(angle)])
-        self.target_generator = generate_new_target(targets_types)
+        self.target_generator = generate_new_target(target_types)
         self.current_target = next(self.target_generator)
-        self.target_distances = [np.inf for _ in [0] + targets_types]
+        self.target_distances = [np.inf for _ in [0] + target_types]
 
     def step(self, t, targets, shouts):
         """
@@ -115,11 +115,24 @@ class Ant:
         :param targets: existing targets
         :param shouts: existing shouts
         """
-        self.pos += ANT_SPEED * self.direction * t
+        self.pos += ANT_SPEED * (1 + random()*ANT_SPEED_NOISE) * self.direction * t
         self.target_distances = [dist + 1 for dist in self.target_distances]
 
-        self.pos[0] %= WIDTH
-        self.pos[1] %= HEIGHT
+        # self.pos[0] %= WIDTH
+        # self.pos[1] %= HEIGHT
+
+        if self.pos[0] < 0:
+            self.pos[0] = 0
+            self.direction[0] *= -1
+        if self.pos[0] > WIDTH:
+            self.pos[0] = WIDTH
+            self.direction[0] *= -1
+        if self.pos[1] < 0:
+            self.pos[1] = 0
+            self.direction[1] *= -1
+        if self.pos[1] > HEIGHT:
+            self.pos[1] = HEIGHT
+            self.direction[1] *= -1
 
         for target in targets:
             if np.linalg.norm(self.pos - target.pos) <= target.size and target.target_type == self.current_target:
@@ -129,6 +142,9 @@ class Ant:
                 self.direction *= -1
                 shouts.append(Shout([dist + SHOUT_DISTANCE for dist in self.target_distances], self.pos))
                 break
+        else:
+            if random() < CHANCE_TO_SHOUT:
+                shouts.append(Shout([dist + SHOUT_DISTANCE for dist in self.target_distances], self.pos))
 
     def update_direction(self, shout):
         """
