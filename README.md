@@ -9,3 +9,9 @@ new main is main file of the program. at first lauch draw an ui with ability to 
 controller.py controls almost all interactions in the simuation. contains all the classes
 
 requirements:
+colorama==0.4.6
+llvmlite==0.41.1
+numba==0.58.1
+numpy==1.26.1
+pygame==2.5.2
+tqdm==4.66.1
