@@ -10,29 +10,39 @@ MAGENTA = (255, 0, 255)
 ORANGE = (255, 165, 0)
 
 SHOUT_DISTANCE = 150
-N_ANTS = 15000
+N_ANTS = 700
 MIN_DISTANCE_FROM_BORDER = 10
 N_TARGET_TYPES = 4 + 1  # 1 food target and 1 queen target
 target_colors = [YELLOW, BLUE, RED, GREEN, MAGENTA]
 queen_health_color = ORANGE
-N_TARGETS = (N_TARGET_TYPES - 1) * 10
+N_TARGETS = (N_TARGET_TYPES - 1) * 3
 TARGET_START_SIZE = 15
 TARGET_ACCELERATION = 50
-ANT_SPEED = 200
-ANT_SPEED_NOISE = 0.5
+ANT_SPEED = 250
+ANT_SPEED_NOISE = 1
 ANT_DIRECTION_NOISE = math.pi / 90
-TARGET_HEALTH = 500
+TARGET_HEALTH = 1000
 CHANCE_TO_SHOUT = 0.01
 CHANCE_TO_QUEEN = 0.0001
 MARGIN_TO_QUEEN = 0.3
 QUEEN_START_HEALTH = 300
 QUEEN_LOSE_HEALTH_CHANCE = 1
 
-DELETE_TARGET_MARGIN = 4 # determines when targets deletes itself (so if 4 and start target size = 40 in deletes at size 10)
-ACTUAL_HEALTH = TARGET_HEALTH * (1 - 1/DELETE_TARGET_MARGIN)
-
-
+DELETE_TARGET_MARGIN = 4  # determines when targets deletes itself (so if 4 and start target size = 40 in deletes at size 10)
+ACTUAL_HEALTH = TARGET_HEALTH * (1 - 1 / DELETE_TARGET_MARGIN)
 
 FPS = 60
-HEIGHT = 900
-WIDTH = 1600
+HEIGHT = 800
+WIDTH = 800
+
+
+def update():
+    global N_ANTS, N_TARGET_TYPES, N_TARGETS, TARGET_HEALTH, MARGIN_TO_QUEEN, QUEEN_START_HEALTH
+    with open('user_settings.txt') as f:
+        arr = [int(i.split(':')[1][:-1]) for i in f.readlines()]
+        N_ANTS = arr[0]
+        N_TARGET_TYPES = arr[1]
+        N_TARGETS = (N_TARGET_TYPES - 1) * arr[2]
+        TARGET_HEALTH = arr[3]
+        MARGIN_TO_QUEEN = arr[4] / 10
+        QUEEN_START_HEALTH = arr[5]
