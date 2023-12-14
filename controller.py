@@ -1,10 +1,12 @@
 import numpy as np
 from numba.experimental import jitclass
-from numba import njit, deferred_type, prange
+from numba import njit, deferred_type, prange, types, typed
 import numba as nb
 from random import randint, random
+import config
 
-from config import *
+config.update()
+
 
 
 @njit
@@ -17,7 +19,9 @@ target_spec = [('x', nb.float64),
                ('target_type', nb.int32),
                ('speed', nb.float32[:]),
                ('pos', nb.float32[:]),
-               ('size', nb.float32)]
+               ('size', nb.float32),
+               ('resources', nb.int32[:]),
+               ('health', nb.int32)]
 
 
 @jitclass(target_spec)
@@ -31,7 +35,9 @@ class Target:
         self.pos = np.array([x, y], dtype=np.float32)
         self.speed = np.array([0., 0.], dtype=np.float32)
         self.target_type = target_type
-        self.size = TARGET_START_SIZE
+        self.size = config.TARGET_START_SIZE
+        self.resources = np.array([0 for i in range(config.N_TARGET_TYPES - 1)], dtype=np.int32)
+        self.health = config.QUEEN_START_HEALTH
 
     def step(self, t: float):
         """
@@ -39,21 +45,34 @@ class Target:
         :return:
         """
         random_angle = 2 * np.pi * random()
-        self.speed += TARGET_ACCELERATION * np.array([np.cos(random_angle), np.sin(random_angle)]) * t
+        self.speed += config.TARGET_ACCELERATION * np.array([np.cos(random_angle), np.sin(random_angle)]) * t
         self.pos += self.speed * t
 
         if self.pos[0] < 0:
             self.pos[0] = 0
             self.speed[0] *= -1
-        if self.pos[0] > WIDTH:
-            self.pos[0] = WIDTH
+        if self.pos[0] > config.WIDTH:
+            self.pos[0] = config.WIDTH
             self.speed[0] *= -1
         if self.pos[1] < 0:
             self.pos[1] = 0
             self.speed[1] *= -1
-        if self.pos[1] > HEIGHT:
-            self.pos[1] = HEIGHT
+        if self.pos[1] > config.HEIGHT:
+            self.pos[1] = config.HEIGHT
             self.speed[1] *= -1
+
+        if self.target_type == 0 and random() < config.QUEEN_LOSE_HEALTH_CHANCE:
+            self.health -= 1
+
+        if self.target_type == 0 and min(self.resources) > 0:
+            self.resources -= 1
+            self.health += 1
+
+        if self.health <= 0:
+            self.size = 0
+
+        if self.health > config.QUEEN_START_HEALTH:
+            self.health = config.QUEEN_START_HEALTH
 
 
 # class Queen(Target):
@@ -84,7 +103,9 @@ ant_spec = [('x', nb.float32),
             ('current_target', nb.int32),
             ('target_distances', nb.float64[:]),
             ('return_to_queen', nb.boolean),
-            ('k', nb.int32)]
+            ('k', nb.int32),
+            ('dist_to_queen', nb.float64),
+            ('previous_target', nb.int32)]
 
 
 @jitclass(ant_spec)
@@ -96,12 +117,14 @@ class Ant:
         :param target_types: targets' types without 0 - queen target.
         """
         self.pos = np.array([x, y], dtype=np.float32)
-        self.speed = ANT_SPEED * (1 + (random() - 1) * ANT_SPEED_NOISE)
+        self.speed = config.ANT_SPEED * (1 + (random() - 1) * config.ANT_SPEED_NOISE)
         angle = 2 * np.pi * random()
         self.direction = np.array([np.cos(angle), np.sin(angle)], np.float32)
         self.current_target = randint(1, len(target_types))
         self.return_to_queen = False
         self.k = self.current_target
+        self.dist_to_queen = config.WIDTH
+        self.previous_target = 0
 
         self.target_distances = np.full(len(target_types) + 1, np.inf, dtype=np.float64)
 
@@ -111,7 +134,7 @@ class Ant:
         :param t: time step
         :param targets: existing targets
         """
-        random_angle = 2 * (random() - 1) * ANT_DIRECTION_NOISE
+        random_angle = 2 * (random() - 1) * config.ANT_DIRECTION_NOISE
         self.pos += self.speed * np.array([np.cos(random_angle) * self.direction[0] -
                                            np.sin(random_angle) * self.direction[1],
                                            np.sin(random_angle) * self.direction[0] +
@@ -125,25 +148,40 @@ class Ant:
         if self.pos[0] < 0:
             self.pos[0] = 0
             self.direction[0] *= -1
-        if self.pos[0] > WIDTH:
-            self.pos[0] = WIDTH
+        if self.pos[0] > config.WIDTH:
+            self.pos[0] = config.WIDTH
             self.direction[0] *= -1
         if self.pos[1] < 0:
             self.pos[1] = 0
             self.direction[1] *= -1
-        if self.pos[1] > HEIGHT:
-            self.pos[1] = HEIGHT
+        if self.pos[1] > config.HEIGHT:
+            self.pos[1] = config.HEIGHT
             self.direction[1] *= -1
 
-        for target in targets:
-            if norm(self.pos - target.pos) <= target.size and target.target_type == self.current_target:
-                target.size *= K_REDUCING_TARGET
+        self.dist_to_queen = max(config.WIDTH, config.HEIGHT)
+
+        for i in prange(len(targets)):
+            target = targets[i]
+            dist = norm(self.pos - target.pos)
+            if target.target_type == 0 and dist < self.dist_to_queen and target.size != 0:
+                self.dist_to_queen = dist
+            if dist <= target.size and target.target_type == self.current_target:
+                if target.target_type != 0: target.size -= config.TARGET_START_SIZE / config.TARGET_HEALTH
+                if target.size <= config.TARGET_START_SIZE // 4:
+                    targets.append(Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
+                                          randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
+                                          target.target_type))
+                    target.size = 0
+                if target.target_type == 0:
+                    target.resources[self.previous_target - 1] += 1
                 self.target_distances[self.current_target] = 0
-                self.update_target()
+                self.update_target(target.resources)
                 self.direction *= -1
-                return Shout(self.target_distances + SHOUT_DISTANCE, self.pos)
-        if random() < CHANCE_TO_SHOUT:
-            return Shout(self.target_distances + SHOUT_DISTANCE, self.pos)
+                return Shout(self.target_distances + config.SHOUT_DISTANCE, self.pos)
+        if random() < config.CHANCE_TO_SHOUT:
+            return Shout(self.target_distances + config.SHOUT_DISTANCE, self.pos)
+        if random() < config.CHANCE_TO_QUEEN and self.dist_to_queen >= config.MARGIN_TO_QUEEN * config.WIDTH:
+            targets.append(Target(self.pos[0], self.pos[1], 0))
         else:
             return None
 
@@ -152,21 +190,19 @@ class Ant:
         Update ant direction
         :param shout: shout
         """
-        if (shout.pos != self.pos).any() and norm(shout.pos - self.pos) <= SHOUT_DISTANCE:
-            for i, dist in enumerate(shout.distances):
-                if self.target_distances[i] > dist:
-                    self.target_distances[i] = dist
+        if (shout.pos != self.pos).any() and norm(shout.pos - self.pos) <= config.SHOUT_DISTANCE:
+            for i in prange(len(shout.distances)):
+                if self.target_distances[i] > shout.distances[i]:
+                    self.target_distances[i] = shout.distances[i]
                     if self.current_target == i:
                         self.direction = ((shout.pos - self.pos) / norm(shout.pos - self.pos)).astype(np.float32)
 
-    def update_target(self):
+    def update_target(self, target_resources):
         if not self.return_to_queen:
+            self.previous_target = self.current_target
             self.current_target = 0
         else:
-            self.k = (self.k + 1) % N_TARGET_TYPES
-            if self.k == 0:
-                self.k = 1
-            self.current_target = self.k
+            self.current_target = np.argmin(target_resources) + 1
         self.return_to_queen = not self.return_to_queen
 
 
@@ -181,11 +217,19 @@ target_type.define(Target.class_type.instance_type)
 
 
 @njit(cache=True, parallel=True)
-def step(ants, shouts):
-    # change ants directions
-    for i in prange(len(ants)):
-        for j in prange(len(shouts)):
-            ants[i].update_direction(shouts[j])
+def step(t, ants, targets, shouts):
+    for i in prange(len(targets)):
+        targets[i].step(t)
+    # update ants
+    for ant in ants:
+        shout = ant.step(t, targets)
+        if shout is not None:
+            shouts.append(shout)
+    if len(shouts) != 0:
+        # change ants directions
+        for i in prange(len(ants)):
+            for j in prange(len(shouts)):
+                ants[i].update_direction(shouts[j])
 
 
 class Env:
@@ -194,43 +238,23 @@ class Env:
         :param t: time step
         """
         self.t = t
-        self.target_types = np.array([_ for _ in range(1, N_TARGET_TYPES)], dtype=np.int32)
+        self.target_types = np.array([_ for _ in range(1, config.N_TARGET_TYPES)], dtype=np.int32)
 
         # create ants
-        self.ants = nb.typed.List([Ant(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
-                                       randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
-                                       self.target_types) for _ in range(N_ANTS)])
+        self.ants = nb.typed.List([Ant(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
+                                       randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
+                                       self.target_types) for _ in range(config.N_ANTS)])
 
         # create targets
-        self.targets = nb.typed.List([Target(WIDTH // 2, HEIGHT // 2, 0)])  # append queen
+        self.targets = nb.typed.List([Target(config.WIDTH // 2, config.HEIGHT // 2, 0)])  # append queen
         for target_type_ in self.target_types:
-            for i in range(N_TARGETS // len(self.target_types)):
-                self.targets.append(Target(randint(MIN_DISTANCE_FROM_BORDER, WIDTH - MIN_DISTANCE_FROM_BORDER),
-                                           randint(MIN_DISTANCE_FROM_BORDER, HEIGHT - MIN_DISTANCE_FROM_BORDER),
+            for i in range(config.N_TARGETS // len(self.target_types)):
+                self.targets.append(Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
+                                           randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
                                            target_type_))
 
+        self.shouts = nb.typed.List([Shout(self.ants[0].target_distances + config.SHOUT_DISTANCE, self.ants[0].pos)])
+
     def step(self):
-        shouts = nb.typed.List()
-        # update targets
-        for target in self.targets:
-            target.step(self.t)
-        # update ants
-        for ant in self.ants:
-            shout = ant.step(self.t, self.targets)
-            if shout is not None:
-                shouts.append(shout)
-        if len(shouts) != 0:
-            step(self.ants, shouts)
-        # shouts = nb.typed.List()
-        # # update targets
-        # for target in self.targets:
-        #     target.step(self.t)
-        # # update ants
-        # for ant in self.ants:
-        #     shout = ant.step(self.t, self.targets)
-        #     if shout is not None:
-        #         shouts.append(shout)
-        # # change ants directions
-        # for ant in self.ants:
-        #     for shout in shouts:
-        #         ant.update_direction(shout)
+        self.shouts.clear()
+        step(self.t, self.ants, self.targets, self.shouts)
