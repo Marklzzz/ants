@@ -8,14 +8,14 @@ import config
 config.update()
 
 
-
 @njit
 def norm(x):
-    '''
+    """
     :param x:
     :return: fast distance
-    '''
+    """
     return (x[0] ** 2 + x[1] ** 2) ** 0.5
+
 
 # spec map for target class
 target_spec = [('x', nb.float64),
@@ -80,9 +80,6 @@ class Target:
             self.health = config.QUEEN_START_HEALTH
 
 
-# class Queen(Target):
-#     pass
-
 # shout spec for shout class
 shout_spec = [('distances', nb.float64[:]),
               ('pos', nb.float32[:])]
@@ -90,9 +87,10 @@ shout_spec = [('distances', nb.float64[:]),
 
 @jitclass(shout_spec)
 class Shout:
-    '''
+    """
     shout class, contains distances to ant shout, position of shout
-    '''
+    """
+
     def __init__(self, distances, pos):
         """
         :param distances: distances that ant shout
@@ -100,6 +98,7 @@ class Shout:
         """
         self.pos = pos
         self.distances = distances
+
 
 # ant spec for ant class
 ant_spec = [('x', nb.float32),
@@ -118,9 +117,10 @@ ant_spec = [('x', nb.float32),
 
 @jitclass(ant_spec)
 class Ant:
-    '''
+    """
     ant class, contains ant logic
-    '''
+    """
+
     def __init__(self, x: float, y: float, target_types):
         """
         :param x: start x
@@ -154,9 +154,6 @@ class Ant:
                                            ]) * t
         self.target_distances += 1
 
-        # self.pos[0] %= WIDTH
-        # self.pos[1] %= HEIGHT
-
         if self.pos[0] < 0:
             self.pos[0] = 0
             self.direction[0] *= -1
@@ -172,10 +169,7 @@ class Ant:
 
         self.dist_to_queen = max(config.WIDTH, config.HEIGHT)
 
-
-        '''
-        target interaction logic
-        '''
+        # target interaction logic
         for i in prange(len(targets)):
             target = targets[i]
             dist = norm(self.pos - target.pos)
@@ -184,9 +178,11 @@ class Ant:
             if dist <= target.size and target.target_type == self.current_target:
                 if target.target_type != 0: target.size -= config.TARGET_START_SIZE / config.TARGET_HEALTH
                 if target.size <= config.TARGET_START_SIZE // config.DELETE_TARGET_MARGIN:
-                    targets.append(Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
-                                          randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
-                                          target.target_type))
+                    targets.append(
+                        Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
+                               randint(config.MIN_DISTANCE_FROM_BORDER,
+                                       config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
+                               target.target_type))
                     target.size = 0
                 if target.target_type == 0:
                     target.resources[self.previous_target - 1] += 1
@@ -218,7 +214,7 @@ class Ant:
             self.previous_target = self.current_target
             self.current_target = 0
         else:
-            self.current_target = randint(1,config.N_TARGET_TYPES-1)
+            self.current_target = randint(1, config.N_TARGET_TYPES - 1)
         self.return_to_queen = not self.return_to_queen
 
 
@@ -257,17 +253,19 @@ class Env:
         self.target_types = np.array([_ for _ in range(1, config.N_TARGET_TYPES)], dtype=np.int32)
 
         # create ants
-        self.ants = nb.typed.List([Ant(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
-                                       randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
-                                       self.target_types) for _ in range(config.N_ANTS)])
+        self.ants = nb.typed.List(
+            [Ant(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
+                 randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
+                 self.target_types) for _ in range(config.N_ANTS)])
 
         # create targets
         self.targets = nb.typed.List([Target(config.WIDTH // 2, config.HEIGHT // 2, 0)])  # append queen
         for target_type_ in self.target_types:
             for i in range(config.N_TARGETS // len(self.target_types)):
-                self.targets.append(Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
-                                           randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
-                                           target_type_))
+                self.targets.append(
+                    Target(randint(config.MIN_DISTANCE_FROM_BORDER, config.WIDTH - config.MIN_DISTANCE_FROM_BORDER),
+                           randint(config.MIN_DISTANCE_FROM_BORDER, config.HEIGHT - config.MIN_DISTANCE_FROM_BORDER),
+                           target_type_))
 
         self.shouts = nb.typed.List([Shout(self.ants[0].target_distances + config.SHOUT_DISTANCE, self.ants[0].pos)])
 

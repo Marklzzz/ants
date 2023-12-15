@@ -10,14 +10,14 @@ YELLOW = (255, 255, 0)
 MAGENTA = (255, 0, 255)
 ORANGE = (255, 165, 0)
 
-SHOUT_DISTANCE = 100 # дистанция крика
-ANT_SIZE = 2 # размер муравья
-N_ANTS = 700 # количество муравье
-MIN_DISTANCE_FROM_BORDER = 10 # минимальное расстояние от границ
-N_TARGET_TYPES = 4 + 1 # 1 food target and 1 queen target
-target_colors = [YELLOW, BLUE, RED, GREEN, MAGENTA] # цвета типов таргетов
+SHOUT_DISTANCE = 100  # дистанция крика
+ANT_SIZE = 2  # размер муравья
+N_ANTS = 700  # количество муравье
+MIN_DISTANCE_FROM_BORDER = 10  # минимальное расстояние от границ
+N_TARGET_TYPES = 4 + 1  # 1 food target and 1 queen target
+target_colors = [YELLOW, BLUE, RED, GREEN, MAGENTA]  # цвета типов таргетов
 queen_health_color = ORANGE
-N_TARGETS = (N_TARGET_TYPES - 1) * 3 # поличество циклов таргетов
+N_TARGETS = (N_TARGET_TYPES - 1) * 3  # поличество циклов таргетов
 TARGET_START_SIZE = 25
 TARGET_ACCELERATION = 50
 ANT_SPEED = 200
@@ -39,9 +39,9 @@ WIDTH = 800
 
 
 def update():
-    '''
+    """
     updates config.py with user inputs
-    '''
+    """
     global N_ANTS, N_TARGET_TYPES, N_TARGETS, TARGET_HEALTH, MARGIN_TO_QUEEN, QUEEN_START_HEALTH
     with open('user_settings.txt') as f:
         arr = [int(i.split(':')[1][:-1]) for i in f.readlines()]
