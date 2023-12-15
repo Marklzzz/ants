@@ -16,6 +16,7 @@ with open('borders.txt') as f:
     MIN_MARGIN_TO_QUEEN, MAX_MARGIN_TO_QUEEN = arr[4][0], arr[4][1]
     MIN_QUEEN_START_HEALTH, MAX_QUEEN_START_HEALTH = arr[5][0], arr[5][1]
 
+
 def Input_window():
     global window
     pygame.init()
@@ -24,13 +25,19 @@ def Input_window():
     font = pygame.font.SysFont(None, 40)
 
     ants_n = TextInputBox.TextInputBox(50, 60, 600, font, f'ants_n (from {MIN_N_ANTS} to {MAX_N_ANTS})')
-    n_targets = TextInputBox.TextInputBox(50, 110, 600, font, f'n_target_types (from {MIN_N_TARGET_TYPES} to {MAX_N_TARGET_TYPES})')
-    n_target_types = TextInputBox.TextInputBox(50, 160, 600, font, f'n_targets (from {MIN_N_TARGETS} to {MAX_N_TARGETS})')
+    n_targets = TextInputBox.TextInputBox(50, 110, 600, font,
+                                          f'n_target_types (from {MIN_N_TARGET_TYPES} to {MAX_N_TARGET_TYPES})')
+    n_target_types = TextInputBox.TextInputBox(50, 160, 600, font,
+                                               f'n_targets (from {MIN_N_TARGETS} to {MAX_N_TARGETS})')
 
-    target_health = TextInputBox.TextInputBox(50, 210, 600, font, f'target_health (from {MIN_TARGET_HEALTH} to {MAX_TARGET_HEALTH})')
-    margin_to_queen = TextInputBox.TextInputBox(50, 260, 600, font, f'margin_to_queen (from {MIN_MARGIN_TO_QUEEN} to {MAX_MARGIN_TO_QUEEN})')
-    queen_start_health = TextInputBox.TextInputBox(50, 310, 600, font, f'queen_start_health (from {MIN_QUEEN_START_HEALTH} to {MAX_QUEEN_START_HEALTH})')
-    simulate_or_main_or_visualise = TextInputBox.TextInputBox(50, 360, 600, font, 'simulate, main or visualise (1, 2 or 3)')
+    target_health = TextInputBox.TextInputBox(50, 210, 600, font,
+                                              f'target_health (from {MIN_TARGET_HEALTH} to {MAX_TARGET_HEALTH})')
+    margin_to_queen = TextInputBox.TextInputBox(50, 260, 600, font,
+                                                f'margin_to_queen (from {MIN_MARGIN_TO_QUEEN} to {MAX_MARGIN_TO_QUEEN})')
+    queen_start_health = TextInputBox.TextInputBox(50, 310, 600, font,
+                                                   f'queen_start_health (from {MIN_QUEEN_START_HEALTH} to {MAX_QUEEN_START_HEALTH})')
+    simulate_or_main_or_visualise = TextInputBox.TextInputBox(50, 360, 600, font,
+                                                              'simulate, main or visualise (1, 2 or 3)')
 
     group = pygame.sprite.Group(ants_n)
     group.add(n_target_types)
@@ -64,18 +71,19 @@ def Input_window():
     exit()
 
 
-
-
-
 restart = False
 while True:
     user_answer = Input_window()
+    if user_answer['simulate, main or visualise (1, 2 or 3)'] == '3':
+        visualize.start()
+        exit()
     if not user_answer[f'ants_n (from {MIN_N_ANTS} to {MAX_N_ANTS})'].isdigit() or not MIN_N_ANTS <= int(
             user_answer[f'ants_n (from {MIN_N_ANTS} to {MAX_N_ANTS})']) <= MAX_N_ANTS:
         pygame.draw.rect(window, (255, 0, 0), (50, 60, 600, 36))
         pygame.display.flip()
         restart = True
-    if not user_answer[f'n_target_types (from {MIN_N_TARGET_TYPES} to {MAX_N_TARGET_TYPES})'].isdigit() or not MIN_N_TARGET_TYPES <= int(
+    if not user_answer[
+        f'n_target_types (from {MIN_N_TARGET_TYPES} to {MAX_N_TARGET_TYPES})'].isdigit() or not MIN_N_TARGET_TYPES <= int(
             user_answer[f'n_target_types (from {MIN_N_TARGET_TYPES} to {MAX_N_TARGET_TYPES})']) <= MAX_N_TARGET_TYPES:
         pygame.draw.rect(window, (255, 0, 0), (50, 110, 600, 38))
         pygame.display.flip()
@@ -85,18 +93,23 @@ while True:
         pygame.draw.rect(window, (255, 0, 0), (50, 160, 600, 38))
         pygame.display.flip()
         restart = True
-    if not user_answer[f'target_health (from {MIN_TARGET_HEALTH} to {MAX_TARGET_HEALTH})'].isdigit() or not MIN_TARGET_HEALTH <= int(
+    if not user_answer[
+        f'target_health (from {MIN_TARGET_HEALTH} to {MAX_TARGET_HEALTH})'].isdigit() or not MIN_TARGET_HEALTH <= int(
             user_answer[f'target_health (from 100 to 1500)']) <= MAX_TARGET_HEALTH:
         pygame.draw.rect(window, (255, 0, 0), (50, 210, 600, 38))
         pygame.display.flip()
         restart = True
-    if not user_answer[f'margin_to_queen (from {MIN_MARGIN_TO_QUEEN} to {MAX_MARGIN_TO_QUEEN})'].isdigit() or not MIN_MARGIN_TO_QUEEN <= int(
-            user_answer[f'margin_to_queen (from {MIN_MARGIN_TO_QUEEN} to {MAX_MARGIN_TO_QUEEN})']) <= MAX_MARGIN_TO_QUEEN:
+    if not user_answer[
+        f'margin_to_queen (from {MIN_MARGIN_TO_QUEEN} to {MAX_MARGIN_TO_QUEEN})'].isdigit() or not MIN_MARGIN_TO_QUEEN <= int(
+            user_answer[
+                f'margin_to_queen (from {MIN_MARGIN_TO_QUEEN} to {MAX_MARGIN_TO_QUEEN})']) <= MAX_MARGIN_TO_QUEEN:
         pygame.draw.rect(window, (255, 0, 0), (50, 260, 600, 38))
         pygame.display.flip()
         restart = True
-    if not user_answer[f'queen_start_health (from {MIN_QUEEN_START_HEALTH} to {MAX_QUEEN_START_HEALTH})'].isdigit() or not MIN_QUEEN_START_HEALTH <= int(
-            user_answer[f'queen_start_health (from {MIN_QUEEN_START_HEALTH} to {MAX_QUEEN_START_HEALTH})']) <= MAX_QUEEN_START_HEALTH:
+    if not user_answer[
+        f'queen_start_health (from {MIN_QUEEN_START_HEALTH} to {MAX_QUEEN_START_HEALTH})'].isdigit() or not MIN_QUEEN_START_HEALTH <= int(
+            user_answer[
+                f'queen_start_health (from {MIN_QUEEN_START_HEALTH} to {MAX_QUEEN_START_HEALTH})']) <= MAX_QUEEN_START_HEALTH:
         pygame.draw.rect(window, (255, 0, 0), (50, 310, 600, 38))
         pygame.display.flip()
         restart = True
@@ -117,7 +130,3 @@ if user_answer['simulate, main or visualise (1, 2 or 3)'] == '2':
     game.start()
 elif user_answer['simulate, main or visualise (1, 2 or 3)'] == '1':
     simulate.start()
-    pygame.quit()
-elif user_answer['simulate, main or visualise (1, 2 or 3)'] == '3':
-    visualize.start()
-
