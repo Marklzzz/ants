@@ -218,7 +218,7 @@ class Ant:
             self.previous_target = self.current_target
             self.current_target = 0
         else:
-            self.current_target = np.argmin(target_resources) + 1
+            self.current_target = randint(1,config.N_TARGET_TYPES-1)
         self.return_to_queen = not self.return_to_queen
 
 
