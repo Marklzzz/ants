@@ -28,5 +28,5 @@ To create new simulation using UI:
    simulate,main,visualize (1,2 or 3) with 1 runs simulate.py - pre-render into file.txt (warning: new simulate overwrites previous file). 2 runs game.py (previously known as main.py) - realtime simulation and visualization. 3 runs visualize.py, which uses data from file.txt to render pre-rendered simulation.
 3) press enter. If all the values are valid, simulation or the visualization will start in a few seconds (shouldn't be longer than 15)
 
-If you wish so, you can modify any parameter using config.txt and running any file separately, OR you can modify borders.txt (WARNING: highly unrecommended, as it might lead to crashes) and extend valid value interval.
+If you wish so, you can modify any parameter using config.py and running any file separately, OR you can modify borders.txt (WARNING: highly unrecommended, as it might lead to crashes) and extend valid value interval.
    
