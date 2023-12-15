@@ -76,7 +76,7 @@ while True:
     user_answer = Input_window()
     if user_answer['simulate, main or visualise (1, 2 or 3)'] == '3':
         visualize.start()
-        break
+        exit()
     if not user_answer[f'ants_n (from {MIN_N_ANTS} to {MAX_N_ANTS})'].isdigit() or not MIN_N_ANTS <= int(
             user_answer[f'ants_n (from {MIN_N_ANTS} to {MAX_N_ANTS})']) <= MAX_N_ANTS:
         pygame.draw.rect(window, (255, 0, 0), (50, 60, 600, 36))
